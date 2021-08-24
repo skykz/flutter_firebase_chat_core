@@ -14,10 +14,11 @@ Future<types.User> fetchUser(String userId, {types.Role? role}) async {
 /// If room has 2 participants, sets correct room name and image.
 Future<List<types.Room>> processRoomsQuery(
   User firebaseUser,
+  String _uuid,
   QuerySnapshot<Map<String, dynamic>> query,
 ) async {
   final futures = query.docs.map(
-    (doc) => processRoomDocument(doc, firebaseUser),
+    (doc) => processRoomDocument(doc, firebaseUser, _uuid),
   );
 
   return await Future.wait(futures);
@@ -27,6 +28,7 @@ Future<List<types.Room>> processRoomsQuery(
 Future<types.Room> processRoomDocument(
   DocumentSnapshot<Map<String, dynamic>> doc,
   User firebaseUser,
+  String _uuid,
 ) async {
   final createdAt = doc.data()?['createdAt'] as Timestamp?;
   var imageUrl = doc.data()?['imageUrl'] as String?;
@@ -49,7 +51,7 @@ Future<types.Room> processRoomDocument(
   if (type == types.RoomType.direct.toShortString()) {
     try {
       final otherUser = users.firstWhere(
-        (u) => u.id != firebaseUser.uid,
+        (u) => u.id != _uuid,
       );
 
       imageUrl = otherUser.imageUrl;

@@ -75,7 +75,7 @@ class FirebaseChatCore {
         .where('userIds', arrayContains: firebaseUser!.uid)
         .get();
 
-    final rooms = await processRoomsQuery(firebaseUser!, query);
+    final rooms = await processRoomsQuery(firebaseUser!, '', query);
 
     try {
       return rooms.firstWhere((room) {
@@ -173,7 +173,7 @@ class FirebaseChatCore {
         .collection('rooms')
         .doc(roomId)
         .snapshots()
-        .asyncMap((doc) => processRoomDocument(doc, firebaseUser!));
+        .asyncMap((doc) => processRoomDocument(doc, firebaseUser!, ''));
   }
 
   /// Returns a stream of rooms from Firebase. Only rooms where current
@@ -186,21 +186,22 @@ class FirebaseChatCore {
   /// 3) Create an Index (Firestore Database -> Indexes tab) where collection ID
   /// is `rooms`, field indexed are `userIds` (type Arrays) and `updatedAt`
   /// (type Descending), query scope is `Collection`
-  Stream<List<types.Room>> rooms({bool orderByUpdatedAt = false}) {
+  Stream<List<types.Room>> rooms(String _uuid,
+      {bool orderByUpdatedAt = false}) {
     if (firebaseUser == null) return const Stream.empty();
 
     final collection = orderByUpdatedAt
         ? FirebaseFirestore.instance
             .collection('rooms')
-            .where('userIds', arrayContains: firebaseUser!.uid)
+            .where('userIds', arrayContains: _uuid)
             .orderBy('updatedAt', descending: true)
         : FirebaseFirestore.instance
             .collection('rooms')
-            .where('userIds', arrayContains: firebaseUser!.uid);
+            .where('userIds', arrayContains: _uuid);
 
     return collection
         .snapshots()
-        .asyncMap((query) => processRoomsQuery(firebaseUser!, query));
+        .asyncMap((query) => processRoomsQuery(firebaseUser!, _uuid, query));
   }
 
   /// Sends a message to the Firestore. Accepts any partial message and a
